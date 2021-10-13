@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.4.22 <0.8.0;
+// Manages all the publishes of your smart contract on the blockchain
+
+pragma solidity >=0.4.21 <0.9.0; 
 
 contract Migrations {
   address public owner = msg.sender;

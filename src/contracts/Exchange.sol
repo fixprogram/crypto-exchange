@@ -10,9 +10,41 @@ contract Exchange {
     uint256 public feePercent; // the fee percentage
     address constant ETHER = address(0); // store Ethers in tokens mapping with blank address
     mapping(address => mapping(address => uint256)) public tokens;
+    mapping(uint256 => _Order) public orders; // Id of the order and the value is the data about this order
+    uint256 public orderCount;
+    mapping(uint256 => bool) public orderCancelled;
 
     event Deposit(address token, address user, uint256 amount, uint256 balance);
     event Withdraw(address token, address user, uint amount, uint balance);
+    event Order(
+        uint id,
+        address user,
+        address tokenGet,
+        uint amountGet,
+        address tokenGive,
+        uint amountGive, 
+        uint timestamp
+    );
+
+    event Cancel(
+        uint id,
+        address user,
+        address tokenGet,
+        uint amountGet,
+        address tokenGive,
+        uint amountGive, 
+        uint timestamp
+    );
+
+    struct _Order { // We use underscore here to not conflict with the event declaration
+        uint id; // Order id
+        address user; // Who create the order
+        address tokenGet; // Address of the token
+        uint amountGet; // Amount of tokens he wanna get
+        address tokenGive; // Address of the token he is gonna trade
+        uint amountGive; // Amount of these tokens
+        uint timestamp; // The time of the order has created
+    }
 
     constructor (address _feeAccount, uint256 _feePercent) public {
         feeAccount = _feeAccount;
@@ -53,5 +85,19 @@ contract Exchange {
 
     function balanceOf(address _token, address _user) public view returns(uint256) {
         return tokens[_token][_user];
+    }
+
+    function makeOrder(address _tokenGet, uint256 _amountGet, address _tokenGive, uint256 _amountGive) public {
+        orderCount = orderCount.add(1);
+        orders[orderCount] = _Order(orderCount, msg.sender, _tokenGet, _amountGet, _tokenGive, _amountGive, now); // NOW sets current timestamp
+        emit Order(orderCount, msg.sender, _tokenGet, _amountGet, _tokenGive, _amountGive, now);
+    }
+
+    function cancelOrder(uint256 _id) public {
+        _Order storage _order = orders[_id]; // we get the order by the id and and assign it to the var called _order type of _Order
+        require(address(_order.user) == msg.sender); // it's the same user
+        require(_order.id == _id); // the order must exist
+        orderCancelled[_id] = true;
+        emit Cancel(orderCount, msg.sender, _order.tokenGet, _order.amountGet, _order.tokenGive, _order.amountGive, now);
     }
 }
